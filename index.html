@@ -237,6 +237,32 @@
   }
   .again-btn:hover { opacity: 0.85; }
 
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #F5EDE4;
+    border: none;
+    color: #241B38;
+    border-radius: 999px;
+    padding: 12px 22px;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-right: 10px;
+    text-decoration: none;
+  }
+  .share-btn:hover { opacity: 0.85; }
+
+  .result-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .mood-btn, .result-wrap { animation: none !important; transition: none !important; }
   }
@@ -291,7 +317,12 @@
         <a id="product-link" class="product-link" href="#" target="_blank" rel="noopener noreferrer">楽天市場で見てみる</a>
       </div>
 
-      <button class="again-btn" onclick="reset()">もう一度占う</button>
+      <div class="result-actions">
+        <button class="share-btn" onclick="shareOnX()">
+          𝕏 でシェア
+        </button>
+        <button class="again-btn" onclick="reset()">もう一度占う</button>
+      </div>
     </section>
   </main>
 
@@ -354,7 +385,7 @@
       { drink: "ルイボスティー", drinkNote: "ノンカフェインで心も体もリラックス", food: "焼き菓子フィナンシェ", foodNote: "バターの香りが幸せな気分に", message: "頑張った自分にご褒美タイム🎁 今日はゆっくりしていいよ", accent: "berry",
         product: { name: "ルイボスティー(ティーバッグ)", note: "ノンカフェインで夜も安心", keyword: "ルイボスティー ティーバッグ", url: "https://hb.afl.rakuten.co.jp/ichiba/57916026.5b677f87.57916027.0b0a8410/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fhappyprovide%2Fm010101%2F&link_type=text&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJ0ZXh0Iiwic2l6ZSI6IjI0MHgyNDAiLCJuYW0iOjEsIm5hbXAiOiJyaWdodCIsImNvbSI6MSwiY29tcCI6ImRvd24iLCJwcmljZSI6MCwiYm9yIjoxLCJjb2wiOjEsImJidG4iOjEsInByb2QiOjAsImFtcCI6ZmFsc2V9" } },
       { drink: "ホットアップルサイダー", drinkNote: "シナモンの香りに包まれる温もり", food: "アップルパイ", foodNote: "定番の組み合わせで満たされる", message: "穏やかな気持ちで一日を締めくくれそう🌙 おつかれさま", accent: "berry",
-        product: { name: "アップルシナモンシロップ", note: "お湯で割ればホットアップルサイダーに", keyword: "アップル シナモン シロップ", url: "https://hb.afl.rakuten.co.jp/ichiba/579160af.759652dc.579160b0.334ddd2b/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fspeed%2Fst-08239%2F&link_type=text&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJ0ZXh0Iiwic2l6ZSI6IjI0MHgyNDAiLCJuYW0iOjEsIm5hbXAiOiJyaWdodCIsImNvbSI6MSwiY29tcCI6ImRvd24iLCJwcmljZSI6MCwiYm9yIjoxLCJjb2wiOjEsImJidG4iOjEsInByb2QiOjAsImFtcCI6ZmFsc2V9" } },
+        product: { name: "アップルシナモンのハーブティー(ティーバッグ)", note: "香り高いブレンドでほっと一息", keyword: "アップルシナモン ハーブティー ティーバッグ", url: "https://hb.afl.rakuten.co.jp/ichiba/579160af.759652dc.579160b0.334ddd2b/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fspeed%2Fst-08239%2F&link_type=text&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJ0ZXh0Iiwic2l6ZSI6IjI0MHgyNDAiLCJuYW0iOjEsIm5hbXAiOiJyaWdodCIsImNvbSI6MSwiY29tcCI6ImRvd24iLCJwcmljZSI6MCwiYm9yIjoxLCJjb2wiOjEsImJidG4iOjEsInByb2QiOjAsImFtcCI6ZmFsc2V9" } },
     ],
   };
 
@@ -390,9 +421,14 @@
     }, 550);
   }
 
+  let currentMoodLabel = "";
+  let currentResult = null;
+
   function showResult(moodId, r) {
+    currentMoodLabel = MOODS.find((m) => m.id === moodId).label;
+    currentResult = r;
     const accent = ACCENTS[r.accent];
-    const moodLabel = MOODS.find((m) => m.id === moodId).label;
+    const moodLabel = currentMoodLabel;
 
     document.getElementById("result-kicker").textContent = moodLabel + " のあなたへ";
     document.getElementById("result-kicker").style.color = accent.main;
@@ -418,6 +454,22 @@
     link.style.color = accent.main;
 
     document.getElementById("result-wrap").style.display = "block";
+  }
+
+  function shareOnX() {
+    if (!currentResult) return;
+    const text =
+      "占ってみたら「" + currentMoodLabel + "」のあなたには\n" +
+      "🥤 " + currentResult.drink + "\n" +
+      "🍽 " + currentResult.food + "\n" +
+      "がおすすめでした🔮\n#気分でドリンク占い";
+    const shareUrl = window.location.href;
+    const intentUrl =
+      "https://twitter.com/intent/tweet?text=" +
+      encodeURIComponent(text) +
+      "&url=" +
+      encodeURIComponent(shareUrl);
+    window.open(intentUrl, "_blank", "noopener,noreferrer");
   }
 
   function reset() {
