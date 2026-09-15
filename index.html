@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>気分でドリンク占い</title>
+<meta name="description" content="今の気分を選ぶと、あなたにぴったりのドリンクとフードを占います。" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #241B38 0%, #2B2140 55%, #322548 100%);
+    color: #F5EDE4;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    padding: 48px 20px 64px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .stars {
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1.5px 1.5px at 20% 30%, rgba(245,237,228,0.35), transparent),
+      radial-gradient(1.5px 1.5px at 70% 20%, rgba(245,237,228,0.25), transparent),
+      radial-gradient(1px 1px at 40% 70%, rgba(245,237,228,0.3), transparent),
+      radial-gradient(1.5px 1.5px at 85% 65%, rgba(245,237,228,0.25), transparent),
+      radial-gradient(1px 1px at 55% 45%, rgba(245,237,228,0.2), transparent);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    max-width: 480px;
+    margin: 0 auto;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .eyebrow {
+    margin: 0 0 8px;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    color: #C9BFDA;
+  }
+
+  h1 {
+    margin: 0 0 14px;
+    font-family: 'Shippori Mincho', serif;
+    font-weight: 700;
+    font-size: clamp(28px, 6vw, 36px);
+    letter-spacing: 0.02em;
+  }
+
+  .subtitle {
+    margin: 0;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: #D8CFE6;
+    max-width: 320px;
+    margin-inline: auto;
+  }
+
+  .mood-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .mood-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 22px 12px;
+    border-radius: 18px;
+    border: 1px solid rgba(245,237,228,0.18);
+    background: rgba(245,237,228,0.05);
+    color: #F5EDE4;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 14.5px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .mood-btn:hover {
+    transform: translateY(-2px);
+    border-color: rgba(245,237,228,0.55);
+  }
+  .mood-btn:active { transform: translateY(0); }
+
+  .mood-emoji { font-size: 26px; }
+
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 60px 0;
+    color: #D8CFE6;
+    font-size: 14.5px;
+  }
+
+  .loading-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #E8607A;
+    display: inline-block;
+  }
+
+  .result-wrap { text-align: center; display: none; animation: fadeUp 0.5s ease both; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-kicker {
+    margin: 0 0 16px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+
+  .result-card {
+    border: 1px solid;
+    border-radius: 20px;
+    padding: 24px 22px;
+    text-align: left;
+  }
+
+  .result-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .result-tag {
+    flex-shrink: 0;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #241B38;
+    padding: 4px 9px;
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+    margin-top: 3px;
+  }
+
+  .result-item-name {
+    margin: 0 0 4px;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 19px;
+    font-weight: 700;
+  }
+
+  .result-item-note {
+    margin: 0;
+    font-size: 13.5px;
+    color: #D8CFE6;
+    line-height: 1.6;
+  }
+
+  .result-divider {
+    height: 1px;
+    background: rgba(245,237,228,0.18);
+    margin: 20px 0;
+  }
+
+  .result-message {
+    margin: 24px 0 28px;
+    font-size: 15px;
+    line-height: 1.8;
+    color: #F5EDE4;
+  }
+
+  .product-block {
+    border-top: 1px dashed rgba(245,237,228,0.25);
+    padding-top: 22px;
+    margin-bottom: 28px;
+    text-align: left;
+  }
+
+  .product-kicker {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: #C9BFDA;
+    letter-spacing: 0.02em;
+  }
+
+  .product-name {
+    margin: 0 0 4px;
+    font-size: 15.5px;
+    font-weight: 700;
+    font-family: 'Zen Maru Gothic', sans-serif;
+  }
+
+  .product-note {
+    margin: 0 0 14px;
+    font-size: 13px;
+    color: #D8CFE6;
+    line-height: 1.6;
+  }
+
+  .product-link {
+    display: inline-block;
+    border: 1px solid;
+    border-radius: 999px;
+    padding: 9px 20px;
+    font-size: 13.5px;
+    font-weight: 500;
+    text-decoration: none;
+    font-family: 'Zen Maru Gothic', sans-serif;
+  }
+
+  .again-btn {
+    background: transparent;
+    border: 1px solid rgba(245,237,228,0.35);
+    color: #F5EDE4;
+    border-radius: 999px;
+    padding: 12px 28px;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .again-btn:hover { opacity: 0.85; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mood-btn, .result-wrap { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="stars" aria-hidden="true"></div>
+
+  <main class="container">
+    <header>
+      <p class="eyebrow">今日の気分は、どんな味？</p>
+      <h1>気分でドリンク占い</h1>
+      <p class="subtitle">今の気持ちを選ぶと、あなたにぴったりのドリンクとフードを占います。</p>
+    </header>
+
+    <section id="mood-grid" class="mood-grid" aria-label="気分を選ぶ"></section>
+
+    <div id="loading" class="loading" style="display:none;">
+      <span class="loading-dot"></span>
+      占っています…
+    </div>
+
+    <section id="result-wrap" class="result-wrap">
+      <p id="result-kicker" class="result-kicker"></p>
+
+      <div id="result-card" class="result-card">
+        <div class="result-row">
+          <div id="tag-drink" class="result-tag">DRINK</div>
+          <div>
+            <p id="result-drink-name" class="result-item-name"></p>
+            <p id="result-drink-note" class="result-item-note"></p>
+          </div>
+        </div>
+
+        <div class="result-divider"></div>
+
+        <div class="result-row">
+          <div id="tag-food" class="result-tag">FOOD</div>
+          <div>
+            <p id="result-food-name" class="result-item-name"></p>
+            <p id="result-food-note" class="result-item-note"></p>
+          </div>
+        </div>
+      </div>
+
+      <p id="result-message" class="result-message"></p>
+
+      <div class="product-block">
+        <p class="product-kicker">今日の気分に近いものはこちら</p>
+        <p id="product-name" class="product-name"></p>
+        <p id="product-note" class="product-note"></p>
+        <a id="product-link" class="product-link" href="#" target="_blank" rel="noopener noreferrer">楽天市場で見てみる</a>
+      </div>
+
+      <button class="again-btn" onclick="reset()">もう一度占う</button>
+    </section>
+  </main>
+
+<script>
+  const MOODS = [
+    { id: "genki", label: "元気いっぱい", emoji: "☀️" },
+    { id: "tired", label: "ちょっと疲れ気味", emoji: "🌙" },
+    { id: "mattari", label: "まったりしたい", emoji: "🍃" },
+    { id: "yaruki", label: "やる気を出したい", emoji: "⚡" },
+    { id: "kibun", label: "気分転換したい", emoji: "🌊" },
+    { id: "hotto", label: "ほっと一息つきたい", emoji: "🕯️" },
+  ];
+
+  // 楽天アフィリエイトのリンク作成ページで発行したURLに差し替えていく想定。
+  // 今は楽天市場の検索結果ページに飛ぶ仮リンク。
+  const RESULTS = {
+    genki: [
+      { drink: "パッションフルーツソーダ", drinkNote: "弾ける酸味で気分もアップ", food: "フルーツグラノーラバー", foodNote: "軽い食感で手が止まらない", message: "今日のあなたは太陽みたいなパワー全開☀️ 気になったことは即行動が吉!", accent: "citrus",
+        product: { name: "パッションフルーツ風味のフレーバー炭酸水", note: "おうちでも、あの弾ける酸味を", keyword: "パッションフルーツ 炭酸水" } },
+      { drink: "アイスマンゴーティー", drinkNote: "南国気分で気持ちも軽やかに", food: "マンゴーとココナッツのタルト", foodNote: "甘さがちょうどいいご褒美", message: "南国気分でテンション上々🌴 迷わず一歩踏み出して正解の日!", accent: "citrus",
+        product: { name: "マンゴーフレーバーティー(ティーバッグ)", note: "南国気分をおうちのカップで", keyword: "マンゴーティー ティーバッグ" } },
+      { drink: "グレープフルーツスカッシュ", drinkNote: "キリッとした苦味が目を覚ます", food: "塩レモンのクラッカー", foodNote: "塩気がアクセントに", message: "キレッキレのエネルギーが出てる日⚡ いつもより一歩踏み込んでみて!", accent: "citrus",
+        product: { name: "グレープフルーツ果汁のスパークリングドリンク", note: "キリッとした一本でスイッチオン", keyword: "グレープフルーツ スパークリング 飲料" } },
+    ],
+    tired: [
+      { drink: "はちみつジンジャーミルク", drinkNote: "じんわり体に染みわたる優しさ", food: "バターシナモンラスク", foodNote: "香りだけでほっとする", message: "無理しすぎ注意報⚠️ 今日は自分にとことん優しくしてOK🍯", accent: "berry",
+        product: { name: "はちみつジンジャーシロップ", note: "お湯やミルクに溶かすだけの手軽さ", keyword: "はちみつ ジンジャーシロップ" } },
+      { drink: "カフェオレ(甘め)", drinkNote: "ミルクのコクで疲れを包み込む", food: "チーズタルト", foodNote: "濃厚な甘さがじんわり効く", message: "頑張り屋さんのあなたへ。今日は少し早めに休んでいいよ🌙", accent: "berry",
+        product: { name: "カフェオレベース(加糖)", note: "ミルクを注ぐだけの手軽なご褒美", keyword: "カフェオレベース 加糖" } },
+      { drink: "ホットチョコレート", drinkNote: "とろける甘さが心をゆるめる", food: "マシュマロクッキー", foodNote: "ふわふわで癒される", message: "エネルギー低めサイン検出📉 甘いもので自分を甘やかそう🍫", accent: "berry",
+        product: { name: "飲むショコラ(ホットチョコレートの素)", note: "お湯やミルクで溶かすだけ", keyword: "飲むショコラ ホットチョコレート" } },
+    ],
+    mattari: [
+      { drink: "カモミールティー", drinkNote: "花の香りで肩の力が抜ける", food: "全粒粉のプレーンビスケット", foodNote: "素朴な味わいでほっとひと息", message: "今日はスローペースが正解🍃 急がず自分のリズムでいこう!", accent: "mint",
+        product: { name: "カモミールティー(ティーバッグ)", note: "夜のリラックスタイムにも", keyword: "カモミールティー ティーバッグ" } },
+      { drink: "抹茶ラテ", drinkNote: "ほろ苦さが静かな気持ちに寄り添う", food: "米粉のマドレーヌ", foodNote: "優しい甘さで気持ちが落ち着く", message: "予定を詰め込みすぎ注意!穏やかに過ごせる一日だよ☺️", accent: "mint",
+        product: { name: "抹茶ラテの素", note: "ミルクを注ぐだけでお店の味", keyword: "抹茶ラテ の素" } },
+      { drink: "レモングラスハーブティー", drinkNote: "すっきりした香りで頭がクリアに", food: "全粒粉クラッカー", foodNote: "軽やかな食感が心地よい", message: "余白タイムを大事に🌿 何もしない時間も立派な予定だよ", accent: "mint",
+        product: { name: "レモングラスハーブティー", note: "香りで気持ちをリセット", keyword: "レモングラス ハーブティー" } },
+    ],
+    yaruki: [
+      { drink: "エスプレッソトニック", drinkNote: "キリッとした刺激でスイッチオン", food: "ダークチョコレート", foodNote: "集中力を後押ししてくれる", message: "やる気スイッチON⚡ 一番気が重いタスクから片付けちゃおう!", accent: "citrus",
+        product: { name: "リキッドエスプレッソ(コーヒーベース)", note: "炭酸で割ればおうちエスプレッソトニック", keyword: "リキッドエスプレッソ コーヒーベース" } },
+      { drink: "ジンジャーレモネード", drinkNote: "ピリッとした刺激が気合を入れる", food: "ナッツ入りエナジーバー", foodNote: "腹持ちも良くて集中が続く", message: "行動力アップの兆し📈 小さく始めれば勢いに乗れる日!", accent: "citrus",
+        product: { name: "ジンジャーレモネードの素", note: "水や炭酸で割るだけの本格派", keyword: "ジンジャーレモネード シロップ" } },
+      { drink: "アイスコーヒー(ストレート)", drinkNote: "シャキッとした苦味で頭を切り替え", food: "プロテインクッキー", foodNote: "腹持ちよく午後まで持続", message: "集中力が冴えてる日🔥 ひとつに絞ると成果が出やすいよ", accent: "citrus",
+        product: { name: "水出しアイスコーヒーパック", note: "冷蔵庫に入れるだけで本格アイスコーヒー", keyword: "水出しコーヒー パック" } },
+    ],
+    kibun: [
+      { drink: "ブルーハワイソーダ", drinkNote: "見た目も涼やかで気分が変わる", food: "レモンタルト", foodNote: "爽やかな酸味でリフレッシュ", message: "いつもと違うことすると運気アップ↑ 寄り道してみて🌊", accent: "mint",
+        product: { name: "ブルーキュラソー風シロップ(ノンアルコール)", note: "炭酸で割れば見た目も涼やかに", keyword: "ブルーハワイ シロップ ノンアルコール" } },
+      { drink: "パイナップルソーダ", drinkNote: "弾ける炭酸で気持ちが切り替わる", food: "ココナッツクッキー", foodNote: "南国気分をプラス", message: "新しい景色が気分を変えてくれる日🌅 少し遠回りしてみよう", accent: "mint",
+        product: { name: "パイナップル果汁シロップ", note: "炭酸割りで南国気分に", keyword: "パイナップル シロップ 果汁" } },
+      { drink: "ライチウーロン茶", drinkNote: "華やかな香りで気分一新", food: "アーモンドフロランタン", foodNote: "香ばしさが良いアクセントに", message: "視点を変えると発見アリ✨ いつもと違う道を選んでみて", accent: "mint",
+        product: { name: "ライチウーロン茶(茶葉・ティーバッグ)", note: "華やかな香りで気分転換", keyword: "ライチウーロン茶 ティーバッグ" } },
+    ],
+    hotto: [
+      { drink: "ホットミルクティー", drinkNote: "優しい香りに包まれる時間", food: "バタークッキー", foodNote: "シンプルな美味しさに安心する", message: "今日はあなただけの静かな時間を大切に🕯️", accent: "berry",
+        product: { name: "ミルクティー用紅茶(アッサムなど濃いめ茶葉)", note: "おうちで本格ミルクティーを", keyword: "ミルクティー 用 紅茶 茶葉" } },
+      { drink: "ルイボスティー", drinkNote: "ノンカフェインで心も体もリラックス", food: "焼き菓子フィナンシェ", foodNote: "バターの香りが幸せな気分に", message: "頑張った自分にご褒美タイム🎁 今日はゆっくりしていいよ", accent: "berry",
+        product: { name: "ルイボスティー(ティーバッグ)", note: "ノンカフェインで夜も安心", keyword: "ルイボスティー ティーバッグ" } },
+      { drink: "ホットアップルサイダー", drinkNote: "シナモンの香りに包まれる温もり", food: "アップルパイ", foodNote: "定番の組み合わせで満たされる", message: "穏やかな気持ちで一日を締めくくれそう🌙 おつかれさま", accent: "berry",
+        product: { name: "アップルシナモンシロップ", note: "お湯で割ればホットアップルサイダーに", keyword: "アップル シナモン シロップ" } },
+    ],
+  };
+
+  const ACCENTS = {
+    citrus: { main: "#F2A65A", soft: "rgba(242,166,90,0.16)" },
+    berry: { main: "#E8607A", soft: "rgba(232,96,122,0.16)" },
+    mint: { main: "#8FC1A9", soft: "rgba(143,193,169,0.16)" },
+  };
+
+  function rakutenUrl(keyword) {
+    return "https://search.rakuten.co.jp/search/mall/" + encodeURIComponent(keyword) + "/";
+  }
+
+  // ムードボタンを描画
+  const moodGrid = document.getElementById("mood-grid");
+  MOODS.forEach((m) => {
+    const btn = document.createElement("button");
+    btn.className = "mood-btn";
+    btn.innerHTML = '<span class="mood-emoji">' + m.emoji + "</span><span>" + m.label + "</span>";
+    btn.onclick = () => drawFortune(m.id);
+    moodGrid.appendChild(btn);
+  });
+
+  function drawFortune(moodId) {
+    moodGrid.style.display = "none";
+    document.getElementById("loading").style.display = "flex";
+    const pool = RESULTS[moodId];
+    const picked = pool[Math.floor(Math.random() * pool.length)];
+
+    setTimeout(() => {
+      document.getElementById("loading").style.display = "none";
+      showResult(moodId, picked);
+    }, 550);
+  }
+
+  function showResult(moodId, r) {
+    const accent = ACCENTS[r.accent];
+    const moodLabel = MOODS.find((m) => m.id === moodId).label;
+
+    document.getElementById("result-kicker").textContent = moodLabel + " のあなたへ";
+    document.getElementById("result-kicker").style.color = accent.main;
+
+    const card = document.getElementById("result-card");
+    card.style.background = accent.soft;
+    card.style.borderColor = accent.main;
+
+    document.getElementById("tag-drink").style.background = accent.main;
+    document.getElementById("tag-food").style.background = accent.main;
+
+    document.getElementById("result-drink-name").textContent = r.drink;
+    document.getElementById("result-drink-note").textContent = r.drinkNote;
+    document.getElementById("result-food-name").textContent = r.food;
+    document.getElementById("result-food-note").textContent = r.foodNote;
+    document.getElementById("result-message").textContent = r.message;
+
+    document.getElementById("product-name").textContent = r.product.name;
+    document.getElementById("product-note").textContent = r.product.note;
+    const link = document.getElementById("product-link");
+    link.href = rakutenUrl(r.product.keyword);
+    link.style.borderColor = accent.main;
+    link.style.color = accent.main;
+
+    document.getElementById("result-wrap").style.display = "block";
+  }
+
+  function reset() {
+    document.getElementById("result-wrap").style.display = "none";
+    moodGrid.style.display = "grid";
+  }
+</script>
+</body>
+</html>
